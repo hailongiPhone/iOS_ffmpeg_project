@@ -31,6 +31,11 @@
 //一次要求的数据，可能是1帧多的数据，makeupPosition记录在后一帧里的位置
 @property(nonatomic, assign) NSUInteger makeupPosition;
 @property(nonatomic, strong) HLAVFrameAudio * makeupFrame;
+
+//同步用数据
+@property(nonatomic, assign) double moviePosition;
+@property(nonatomic, assign) double audioloadDataPosition;
+@property(nonatomic, assign) double runloopDuration;
 @property(nonatomic, assign) double audioPosition;
 
 //解码后的数据
@@ -142,7 +147,7 @@
 }
 - (void) timerCallback:(CADisplayLink *)displayLink;
 {
-    
+    self.runloopDuration += (displayLink.targetTimestamp - displayLink.timestamp);
     if (!self.playing) {
         return;
     }
@@ -162,8 +167,15 @@
     [self playAudio];
     
     self.currentframe = [self consumerVideoFrame];
-    
+    self.moviePosition = self.currentframe.position;
     [self.renderView render:self.currentframe];
+
+    
+    HLAVLog(@"~~~~~ \ntimerCallback runloopDuration = %f \n moviePosition = %f,\n audioloadDataPosition = %f \n audioPosition = %f,\n ~~~~~~~~~~ ",
+            self.runloopDuration,
+            self.moviePosition,
+            self.audioloadDataPosition,
+            self.audioPosition);
 }
 
 #pragma mark - 线程相关
@@ -246,9 +258,9 @@
     }
     NSLog(@"video frame posiont = %f",video.position);
     NSLog(@"audioPosition posiont = %f",self.audioPosition);
-    double difference = ABS(video.position - self.audioPosition);
+    double difference = ABS(video.position - self.audioloadDataPosition);
     NSLog(@"difference = %f",difference);
-    return difference < 0.7;
+    return difference < 0.03;
 }
 
 - (HLAVFrameAudio *)consumerAudioFrame;
@@ -317,12 +329,12 @@
                 self.makeupFrame = [self consumerAudioFrame];
                 self.makeupPosition = 0;
             }
+            self.audioloadDataPosition = self.makeupFrame.position;
             
             NSData *frameData = self.makeupFrame.data;
             NSInteger channels = [self.decoder.outputFormat channels];
             
             if (frameData == nil) {
-                return 0;
                 //实在没数据就0
                 NSLog(@"读取声音信息失败");
                 memset(sampleBuffer, 0, numberOfFrames * frameSize * sizeof(float));
@@ -362,15 +374,15 @@
 - (void)audioPlayer:(HLAudioPlayer *)player
          willRender:(const AudioTimeStamp *)timestamp;
 {
-//    self.audioPosition = timestamp->mSampleTime * self.decoder.avInfo.audioTimebase;
-//    NSLog(@"willRender  timestamp %f",self.audioPosition);
+    double audioPosition = timestamp->mSampleTime * self.decoder.avInfo.audioTimebase;
+    NSLog(@"willRender  timestamp %f",audioPosition);
 }
 
 - (void)audioPlayer:(HLAudioPlayer *)player
           didRender:(const AudioTimeStamp *)timestamp;
 {
     self.audioPosition = timestamp->mSampleTime * self.decoder.avInfo.audioTimebase;
-    NSLog(@"audioPlayer  timestamp %f",self.audioPosition);
+    NSLog(@"didRender  timestamp %f",self.audioPosition);
     
     
 }
