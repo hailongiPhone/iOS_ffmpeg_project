@@ -166,11 +166,13 @@
     
     [self playAudio];
     
-    self.currentframe = [self consumerVideoFrame];
-    self.moviePosition = self.currentframe.position;
-    [self.renderView render:self.currentframe];
+    HLAVFrameVideo * next = [self consumerVideoFrame];
+    if (next != self.currentframe) {
+        self.currentframe = next;
+        self.moviePosition = self.currentframe.position;
+        [self.renderView render:self.currentframe];
+    }
 
-    
     HLAVLog(@"~~~~~ \ntimerCallback runloopDuration = %f \n moviePosition = %f,\n audioloadDataPosition = %f \n audioPosition = %f,\n ~~~~~~~~~~ ",
             self.runloopDuration,
             self.moviePosition,
@@ -257,10 +259,23 @@
         return NO;
     }
     NSLog(@"video frame posiont = %f",video.position);
-    NSLog(@"audioPosition posiont = %f",self.audioPosition);
-    double difference = ABS(video.position - self.audioloadDataPosition);
-    NSLog(@"difference = %f",difference);
-    return difference < 0.03;
+    NSLog(@"audioPosition posiont = %f",self.audioloadDataPosition);
+    //以音频为主 3中情况
+    // 在可以接受范围内 video 慢 video 快
+    double threshold = 0.03;
+    
+    if (self.audioloadDataPosition - video.position > threshold) {
+        return NO;
+    }
+    
+//    double difference = ABS(video.position - self.audioloadDataPosition);
+//    NSLog(@"difference = %f",difference);
+//    if (difference < threshold){
+//        return YES;
+//    }
+    
+    return YES;
+    
 }
 
 - (HLAVFrameAudio *)consumerAudioFrame;
