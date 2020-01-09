@@ -928,6 +928,12 @@
 		D967668723AC864400C173FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=*]" = (
+					"$(ARCHS_STANDARD)",
+					x86_64,
+					arm64,
+				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 35KA26N77R;
@@ -951,13 +957,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.HL.ffmpegProject;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = 1;
-				VALID_ARCHS = "arm64 arm64e";
+				VALID_ARCHS = "x86_64 arm64";
 			};
 			name = Debug;
 		};
 		D967668823AC864400C173FF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 35KA26N77R;
@@ -981,7 +988,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.HL.ffmpegProject;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = 1;
-				VALID_ARCHS = "arm64 arm64e";
+				VALID_ARCHS = "arm64 x86_64";
 			};
 			name = Release;
 		};
