@@ -24,13 +24,14 @@
 @property(nonatomic, assign) BOOL decoding;
 @property(nonatomic, strong) HLAVDecoder * decoder;
 @property(nonatomic, strong) HLAVRenderView * renderView;
+@property(nonatomic, strong) HLAVFrameVideo * currentframe;//方便时间同步问题
 @property(nonatomic, strong) UIView * outputView;
 
 @property(nonatomic, strong) HLAudioPlayer * audioplayer;
-
 //一次要求的数据，可能是1帧多的数据，makeupPosition记录在后一帧里的位置
 @property(nonatomic, assign) NSUInteger makeupPosition;
 @property(nonatomic, strong) HLAVFrameAudio * makeupFrame;
+@property(nonatomic, assign) double audioPosition;
 
 //解码后的数据
 @property (nonatomic,strong)HLAVDecoderOutput * cacheFrame;
@@ -68,7 +69,7 @@
     
     self.playing = YES;
     [self asyncDecodeFrames];
-    [self playAudio];
+    
 }
 
 - (void)pause;
@@ -141,6 +142,7 @@
 }
 - (void) timerCallback:(CADisplayLink *)displayLink;
 {
+    
     if (!self.playing) {
         return;
     }
@@ -157,9 +159,11 @@
         [self asyncDecodeFrames];
     }
     
-    HLAVFrameVideo * frame = [self consumerVideoFrame];
+    [self playAudio];
     
-    [self.renderView render:frame];
+    self.currentframe = [self consumerVideoFrame];
+    
+    [self.renderView render:self.currentframe];
 }
 
 #pragma mark - 线程相关
@@ -196,7 +200,7 @@
                     
                     HLAVDecoderOutput *decoderOutput = [decoder decodeFrames:strongSelf.minBufferDuration];
                     [strongSelf producerFrame:decoderOutput];
-                    NSLog(@"产生音乐信息");
+                    NSLog(@"产生音乐信息 缓存时长 = %f 时间点 = %f",[decoderOutput maxDuration],[decoderOutput minPosition]);
                 }
             }
         }
@@ -223,12 +227,28 @@
 
 - (HLAVFrameVideo *)consumerVideoFrame;
 {
-    HLAVFrameVideo * frame ;
-    @synchronized (self.cacheFrame) {
-        frame = [self.cacheFrame consumerVideoFrame];
+    HLAVFrameVideo * frame = self.currentframe;
+//    @synchronized (self.cacheFrame) {
+//        frame = [self.cacheFrame consumerVideoFrame];
+//    }
+    while ((!frame && [self.cacheFrame hasVideoData]) || (frame && ![self isSynchronizedWithAudio:frame])){
+        @synchronized (self.cacheFrame) {
+            frame = [self.cacheFrame consumerVideoFrame];
+        }
     }
-    
     return frame;
+}
+
+- (BOOL) isSynchronizedWithAudio:(HLAVFrameVideo *) video;
+{
+    if (!video) {
+        return NO;
+    }
+    NSLog(@"video frame posiont = %f",video.position);
+    NSLog(@"audioPosition posiont = %f",self.audioPosition);
+    double difference = ABS(video.position - self.audioPosition);
+    NSLog(@"difference = %f",difference);
+    return difference < 0.7;
 }
 
 - (HLAVFrameAudio *)consumerAudioFrame;
@@ -266,6 +286,12 @@
 
 - (void) playAudio;
 {
+    if([self.audioplayer isPlaying] || ![self.cacheFrame hasAudioData]){
+        return;
+    }
+    [self setupAudioPlayer];
+    
+    self.audioPosition = 0;
     [self.audioplayer play];
 }
 
@@ -279,7 +305,7 @@
                   numFrames:(NSInteger)numberOfFrames
                 numChannels:(NSInteger)channels;
 {
-    NSLog(@"audioPlayer");
+//    NSLog(@"audioPlayer");
     
     if (!self.playing) return 0;
     
@@ -296,6 +322,7 @@
             NSInteger channels = [self.decoder.outputFormat channels];
             
             if (frameData == nil) {
+                return 0;
                 //实在没数据就0
                 NSLog(@"读取声音信息失败");
                 memset(sampleBuffer, 0, numberOfFrames * frameSize * sizeof(float));
@@ -335,12 +362,16 @@
 - (void)audioPlayer:(HLAudioPlayer *)player
          willRender:(const AudioTimeStamp *)timestamp;
 {
-    NSLog(@"willRender  timestamp");
+//    self.audioPosition = timestamp->mSampleTime * self.decoder.avInfo.audioTimebase;
+//    NSLog(@"willRender  timestamp %f",self.audioPosition);
 }
 
 - (void)audioPlayer:(HLAudioPlayer *)player
           didRender:(const AudioTimeStamp *)timestamp;
 {
-    NSLog(@" didRender timestamp");
+    self.audioPosition = timestamp->mSampleTime * self.decoder.avInfo.audioTimebase;
+    NSLog(@"audioPlayer  timestamp %f",self.audioPosition);
+    
+    
 }
 @end

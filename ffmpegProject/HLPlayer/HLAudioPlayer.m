@@ -97,8 +97,20 @@
 
 #pragma mark - Setup/Destory
 
+- (void) setupAudioSession
+{
+    AVAudioSession * session = [AVAudioSession sharedInstance];
+    [session setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
+    NSTimeInterval bufferDuration = 0.002;
+    [session setPreferredIOBufferDuration:bufferDuration error:nil];
+    double samplerate =44100;
+    [session setPreferredSampleRate:samplerate error:nil];
+    [session setActive:YES error:nil];
+}
 - (void)setup
 {
+    [self setupAudioSession];
+    
     _outData = (float *)calloc(MAX_FRAME_SIZE*MAX_CHAN, sizeof(float));
     
     self.rate = 1.0;

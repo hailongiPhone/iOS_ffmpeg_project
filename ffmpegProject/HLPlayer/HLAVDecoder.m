@@ -478,7 +478,7 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
             exit(1);
         }
         
-        printf("audio frame %3d\n", codecCtx->frame_number);
+//        printf("audio frame %3d\n", codecCtx->frame_number);
         
         HLAVFrameAudio* audioFrame = [self handleAudioFrame:pFrame];
         
@@ -557,10 +557,10 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
         audioframe.duration = data.length / (sizeof(float) * channels * sampleRate);
     }
     
-    HLAVLog(@"AFD: %.4f %.4f | %.4f ",
-            audioframe.position,
-            audioframe.duration,
-            audioframe.data.length / (8.0 * 44100.0));
+//    HLAVLog(@"AFD: %.4f %.4f | %.4f ",
+//            audioframe.position,
+//            audioframe.duration,
+//            audioframe.data.length / (8.0 * 44100.0));
 
     return audioframe;
 }

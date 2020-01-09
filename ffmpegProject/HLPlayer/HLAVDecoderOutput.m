@@ -40,9 +40,24 @@
     }
 }
 
+- (BOOL) hasAudioData;
+{
+    return self.audioframes && [self.audioframes count] > 0;
+}
+
+- (BOOL) hasVideoData;
+{
+    return self.videoframes && [self.videoframes count] > 0;
+}
+
 - (CGFloat)maxDuration;
 {
     return MAX(self.audioframesDuration, self.videoframesDuration);
+}
+
+- (CGFloat)minPosition;
+{
+    return MIN([[self.audioframes firstObject] position], [[self.videoframes firstObject] position]);
 }
 
 - (HLAVFrameVideo *) consumerVideoFrame;

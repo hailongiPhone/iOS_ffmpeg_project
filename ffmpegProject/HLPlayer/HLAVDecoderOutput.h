@@ -34,7 +34,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (HLAVFrameVideo *) consumerVideoFrame;
 - (HLAVFrameAudio *) consumerAudioFrame;
 
+- (BOOL) hasAudioData;
+- (BOOL) hasVideoData;
+
 - (CGFloat)maxDuration;
+- (CGFloat)minPosition;
 @end
 
 NS_ASSUME_NONNULL_END
