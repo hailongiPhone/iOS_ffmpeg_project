@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface HLAVFrameArtwork : HLAVFrame
 @property (nonatomic, strong) NSData *data;
-- (UIImage *) asImage;
+- (nullable UIImage *) asImage;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -390,6 +390,10 @@ static int open_codec_context(int *stream_idx,
     UIImage * result;
     AVFrame *imageFrame = av_frame_alloc();
     ret = av_image_alloc(imageFrame->data, imageFrame->linesize, outputWidth, outputHeight, AV_PIX_FMT_RGB24, 1);
+    if(ret < 0){
+        av_frame_unref(imageFrame);
+        return nil;
+    }
     static int sws_flags =  SWS_FAST_BILINEAR;
     struct SwsContext * img_convert_ctx = sws_getContext(video_dec_ctx->width,
                                                          video_dec_ctx->height,

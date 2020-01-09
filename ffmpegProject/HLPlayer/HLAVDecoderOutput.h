@@ -31,8 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init;
 
 - (void) addOutput:(HLAVDecoderOutput*)output;
-- (HLAVFrameVideo *) consumerVideoFrame;
-- (HLAVFrameAudio *) consumerAudioFrame;
+- (nullable HLAVFrameVideo *) consumerVideoFrame;
+- (nullable HLAVFrameAudio *) consumerAudioFrame;
 
 - (BOOL) hasAudioData;
 - (BOOL) hasVideoData;

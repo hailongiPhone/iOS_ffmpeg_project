@@ -305,7 +305,7 @@
     }
     
     int channels  = ChannelsPerFrame;
-    int bytesPerFrame = BytesPerFrame;
+//    int bytesPerFrame = BytesPerFrame;
     int channelsPerFrame = ChannelsPerFrame;
     int bitsPerChannel = BitsPerChannel;
     

@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void) justAudio:(NSArray *)files to:(NSString *)desFile;
 
-- (UIImage *) thumbnailImageOfVideo:(NSString *) videoPath
+- (nullable UIImage *) thumbnailImageOfVideo:(NSString *) videoPath
                 thumbnailFrameIndex:(NSInteger)frameIndex
                                size:(CGSize)desSize;
 

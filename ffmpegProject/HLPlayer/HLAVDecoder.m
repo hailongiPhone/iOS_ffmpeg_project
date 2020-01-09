@@ -34,13 +34,13 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
     // 默认0.04 意思就是25帧
     if (st->time_base.den && st->time_base.num)
         timebase = av_q2d(st->time_base);
-    else if(st->codec->time_base.den && st->codec->time_base.num)
-        timebase = av_q2d(st->codec->time_base);
+    else if(st->time_base.den && st->time_base.num)
+        timebase = av_q2d(st->time_base);
     else
         timebase = defaultTimeBase;
     
-    if (st->codec->ticks_per_frame != 1) {
-    }
+//    if (st->codec->ticks_per_frame != 1) {
+//    }
     
     // 平均帧率
     if (st->avg_frame_rate.den && st->avg_frame_rate.num)
@@ -229,6 +229,10 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
     _rgbFrame = av_frame_alloc();
     
     ret = av_image_alloc(_rgbFrame->data, _rgbFrame->linesize, outputWidth, outputHeight, AV_PIX_FMT_RGB24, 1);
+    if(ret < 0){
+        HLAVLog(@"lazyLoadVideoAdjust _rgbFrame error");
+        return nil;
+    }
     static int sws_flags =  SWS_FAST_BILINEAR;
     _swsContext = sws_getContext(video_dec_ctx->width,
                                  video_dec_ctx->height,
@@ -293,7 +297,10 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
             [self handleSubtitlePacket:&packet];
         }
         
-        [output addOutput:tmp];
+        if (tmp) {
+            [output addOutput:tmp];
+        }
+        
         if (output.maxDuration > minDuration)
             finished = YES;
         
@@ -408,7 +415,10 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
         
         AVFrame *imageFrame = av_frame_alloc();
         int ret = av_image_alloc(imageFrame->data, imageFrame->linesize, outputWidth, outputHeight, AV_PIX_FMT_RGB24, 1);
-        
+        if(ret < 0){
+            av_frame_unref(imageFrame);
+            return nil;
+        }
         
         //转换RGBA
         sws_scale(_swsContext,
@@ -433,9 +443,9 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
     frame.height = _videoCodecCtx->height;
     
     //时间计算
-    frame.position = av_frame_get_best_effort_timestamp(avframe) * videoTimeBase;
+    frame.position = avframe->best_effort_timestamp * videoTimeBase;
     
-    const int64_t frameDuration = av_frame_get_pkt_duration(_videoFrame);
+    const int64_t frameDuration = _videoFrame->pkt_duration;
     if (frameDuration) {
         
         frame.duration = frameDuration * videoTimeBase;
@@ -455,7 +465,7 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
     HLAVLog(@"VFD: %.4f %.4f | %lld ",
             frame.position,
             frame.duration,
-            av_frame_get_pkt_pos(avframe));
+            avframe->pkt_pos);
     
     return frame;
 }
@@ -546,8 +556,8 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
     vDSP_vsmul(data.mutableBytes, 1, &scale, data.mutableBytes, 1, numElements);
     
     HLAVFrameAudio *audioframe = [HLAVFrameAudio new];
-    audioframe.position = av_frame_get_best_effort_timestamp(_audioFrame) * timebase;
-    audioframe.duration = av_frame_get_pkt_duration(_audioFrame) * timebase;
+    audioframe.position = _audioFrame->best_effort_timestamp * timebase;
+    audioframe.duration = _audioFrame->pkt_duration * timebase;
     audioframe.data = data;
     
     if (audioframe.duration == 0) {

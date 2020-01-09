@@ -20,11 +20,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface HLFFmpegHelper : NSObject
-+ (AVFormatContext *)openInput:(NSString *)filename;
++ (nullable AVFormatContext *)openInput:(NSString *)filename;
 
 
 //输出
-+ (AVFormatContext *)createOutputFormatContext:(NSString *)outputfilename;
++ (nullable AVFormatContext *)createOutputFormatContext:(NSString *)outputfilename;
 + (void)setupOutPutFormat:(AVFormatContext *)o_fmtctx with:(AVFormatContext *)i_fmtctx justType:(enum AVMediaType) justType;
 + (void)copyAllFrom:(AVFormatContext *)i_fmtctx to:(AVFormatContext *)o_fmtctx justType:(enum AVMediaType) justType;
 
@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 //- (int)findAudioStream:(AVFormatContext *)fmtctx context:(AVCodecContext **)context;
 
 //解码器加载
-+ (AVCodecContext *) loadCodecFor:(AVFormatContext *)fmtctx streamIndex:(NSInteger)streamIndex;
++ (nullable AVCodecContext *) loadCodecFor:(AVFormatContext *)fmtctx streamIndex:(NSInteger)streamIndex;
 
 //图片格式转换
 + (float)calculateSclaeSize:(CGSize)original dest:(CGSize)dest;
@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)stream:(AVStream *)stream fps:(double *)fps timebase:(double *)timebase default:(double)defaultTimebase;
 + (double)rotationFromVideoStream:(AVStream *)stream;
 
-+ (UIImage *)imageFromAVFrame:(AVFrame *)pFrame video_dec_ctx:(AVCodecContext *)video_dec_ctx outputHeight:(int)outputHeight outputWidth:(int)outputWidth;
++ (nullable UIImage *)imageFromAVFrame:(AVFrame *)pFrame video_dec_ctx:(AVCodecContext *)video_dec_ctx outputHeight:(int)outputHeight outputWidth:(int)outputWidth;
 @end
 
 NS_ASSUME_NONNULL_END

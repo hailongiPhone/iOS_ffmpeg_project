@@ -374,7 +374,7 @@
 //信息读取
 + (NSData *)dataFromVideoFrame:(UInt8 *)data linesize:(int)linesize width:(int)width height:(int)height;
 {
-    width = MIN(linesize, width);
+//    width = MIN(linesize, width);
     CFDataRef dataref= CFDataCreate(kCFAllocatorDefault,
     data,
    linesize * height);
@@ -451,6 +451,10 @@
     UIImage * result;
     AVFrame *imageFrame = av_frame_alloc();
     ret = av_image_alloc(imageFrame->data, imageFrame->linesize, outputWidth, outputHeight, AV_PIX_FMT_RGB24, 1);
+    if(ret < 0){
+        av_frame_unref(imageFrame);
+        return nil;
+    }
     static int sws_flags =  SWS_FAST_BILINEAR;
     struct SwsContext * img_convert_ctx = sws_getContext(video_dec_ctx->width,
                                                          video_dec_ctx->height,

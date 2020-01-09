@@ -29,6 +29,9 @@
     
     GLint _backingWidth;
     GLint _backingHeight;
+    
+    
+    dispatch_queue_t _dispatchQueue;
 }
 @property(nonatomic,strong) HLAVDecoder * decoder;
 @property(nonatomic,strong) OPGLESRenderRGB * render;
@@ -41,7 +44,7 @@
 - (instancetype) init;
 {
     self = [super init];
-    if (self && ![self setupEAGL]) {
+    if (self && ![self setup]) {
         self = nil;
     }
     return self;
@@ -50,7 +53,7 @@
 - (instancetype) initWithCoder:(NSCoder *)coder;
 {
     self = [super initWithCoder:coder];
-    if (self && ![self setupEAGL]) {
+    if (self && ![self setup]) {
         self = nil;
     }
     return self;
@@ -58,7 +61,7 @@
 - (instancetype) initWithFrame:(CGRect)frame;
 {
     self = [super initWithFrame:frame];
-    if (self && ![self setupEAGL]) {
+    if (self && ![self setup]) {
         self = nil;
     }
     return self;
@@ -69,7 +72,7 @@
     self = [super initWithFrame:frame];
     if (self) {
         self.decoder = decoder;
-        if (![self setupEAGL]) {
+        if (![self setup]) {
             self = nil;
         }
     }
@@ -83,7 +86,17 @@
     return [CAEAGLLayer class];
 }
 
+- (BOOL) setup;
+{
+    BOOL result =  [self setupEAGL];
+    if (result) {
+        [self setupQueue];
+    }
+    
+    return result;
+}
 - (BOOL) setupEAGL {
+    
     _eaglLayer = (CAEAGLLayer *)self.layer;
     _eaglLayer.opaque = YES;
     
@@ -177,21 +190,30 @@
     if (!frame) {
         return;
     }
-    [EAGLContext setCurrentContext:_context];
-    glBindFramebuffer(GL_FRAMEBUFFER, _frameBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
     
-    glViewport(0, 0, _backingWidth, _backingHeight);
-    
-    if (frame) {
-        [self.render feedTextureFrame:frame];
-        [self.render renderTexture];
-    }
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(_dispatchQueue, ^{
+        __strong typeof(self) strongSelf = weakSelf;
+        [EAGLContext setCurrentContext:strongSelf->_context];
+        glBindFramebuffer(GL_FRAMEBUFFER, strongSelf->_frameBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, strongSelf->_renderBuffer);
+        
+        glViewport(0, 0, strongSelf->_backingWidth, strongSelf->_backingHeight);
+        
+        if (frame) {
+            [strongSelf.render feedTextureFrame:frame];
+            [strongSelf.render renderTexture];
+        }
 
-    
-    [_context presentRenderbuffer:GL_RENDERBUFFER];
-    
-    self.lastFrame = frame;
+        [strongSelf->_context presentRenderbuffer:GL_RENDERBUFFER];
+        strongSelf.lastFrame = frame;
+    });
+}
+
+#pragma mark - setup Queue
+- (void) setupQueue;
+{
+      _dispatchQueue = dispatch_queue_create("viedeoRenderQueue", DISPATCH_QUEUE_SERIAL);
 }
 @end
 
